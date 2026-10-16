@@ -42,7 +42,9 @@ flutter run
 
 ## 验证与构建
 
-2026-10-16：`flutter analyze` 无问题，13 项测试通过。首次 Android 构建曾在下载 Maven 依赖时发生 TLS 握手失败，正在使用本机代理验证；尚未把 APK 构建标为通过。
+2026-10-16：`flutter analyze` 无问题，13 项测试通过；ARM64 debug APK 构建通过，并已在 Android API36 模拟器上安装和启动。设备测试验证了文章打开、真实合成音频播放 / 进度 / 暂停、隐藏正文、返回列表，未发现崩溃。
+
+设备测试脚本：`python3 tool/smoke_android.py`（需先启动模拟器，默认序列号 emulator-5554）。实际运行截图保存在 `docs/screenshots/`。
 
 ```sh
 flutter analyze
@@ -50,7 +52,7 @@ flutter test
 flutter build apk --debug
 ```
 
-构建成功后，测试包位于 `build/app/outputs/flutter-apk/app-debug.apk`。
+本次已成功构建的 ARM64 测试包位于 `build/app/outputs/flutter-apk/app-debug.apk`。
 
 测试覆盖 URL 来源校验、清理 HTML 并保留 ruby、列表去重、使用确认页、音频缺失、缓存、重定向、收藏持久化、切换来源时的异步竞争、阅读交互、320px 布局及所有演示 WAV 的完整性。
 
@@ -59,3 +61,15 @@ SDK / Gradle 构建文件由本机 Flutter 3.47.7 生成；依赖版本保存在
 ## 恢复记录
 
 旧聊天中最初写入 Documents/ChatGPT 的源码目录已不存在，常用目录也未找到该 Flutter 工程。本工程于 2026-10-16 根据聊天中的功能、源码设计与保留的界面 Demo 重新恢复，后续使用 Git 跟踪。
+
+## 本机网络说明
+
+首次构建曾因 Maven 依赖 TLS 握手失败以及 NDK 下载中断而失败，已通过本机代理与校验后补装 NDK 完成。没有关闭 TLS 证书校验。
+
+如果后续终端构建再次发生同类问题，确认本机 HTTP 代理 127.0.0.1:7890 正常运行后，可以只对这次命令设置代理：
+
+```sh
+JAVA_TOOL_OPTIONS='-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890 -Dorg.gradle.workers.max=2 -Dhttp.keepAlive=false' flutter run
+```
+
+这组代理参数只适用于当前机器，不应直接用于其他人的环境。
